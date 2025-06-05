@@ -24,7 +24,8 @@ import torchaudio
 import io
 import json
 from .datum_all_pb2 import Datum_all as Datum_lmdb
-from .datum_mos_pb2 import Datum_mos as Datum_lmdb_mos
+# from .datum_mos_pb2 import Datum_mos as Datum_lmdb_mos
+
 def dynamic_range_compression_torch(x, C=1, clip_val=1e-5):
     return torch.log(torch.clamp(x, min=clip_val) * C)
 
@@ -63,7 +64,7 @@ class AudioDataset(Dataset):
         
         self.lmdb_path = [_.encode("utf-8") for _ in lmdb_path]
         self.lmdb_env = [lmdb.open(_, readonly=True, lock=False) for _ in self.lmdb_path]
-        self.mos_txn_env = lmdb.open(mos_path, readonly=True, lock=False)
+        # self.mos_txn_env = lmdb.open(mos_path, readonly=True, lock=False)
         self.key_path = [_.encode("utf-8") for id, _ in enumerate(key_path)]
         self.keys = []
         for _ in range(len(key_path)):
@@ -80,11 +81,11 @@ class AudioDataset(Dataset):
         # self.txn = self.lmdb_env.begin()
         print(f"Dataset initialize finished, dataset_length : {len(self.keys)}")
         print(f"Initialize of filter start: ")
-        with open('filter_all.lst', 'r') as f:
-            self.filter = {}
-            for _ in f.readlines():
-                self.filter[_.strip()] = 1
-        print(f"Initialize of filter finished")
+        # with open('filter_all.lst', 'r') as f:
+        #     self.filter = {}
+        #     for _ in f.readlines():
+        #         self.filter[_.strip()] = 1
+        # print(f"Initialize of filter finished")
         #print(f"Initialize of fusion start: ")
         #with open('new_file.txt', 'r') as f:
         #    self.refined_caption = {}
@@ -179,14 +180,14 @@ class AudioDataset(Dataset):
                 cursor = txn.cursor()
                 try:
                     cursor.set_key(k)
-           
                     datum_tmp = Datum_lmdb()
                     datum_tmp.ParseFromString(cursor.value())
-                    zobj = zlib.decompressobj()  # obj for decompressing data streams that won’t fit into memory at once.
-                    decompressed_bytes = zobj.decompress(datum_tmp.wav_file)
+                    # zobj = zlib.decompressobj()  # obj for decompressing data streams that won’t fit into memory at once.
+                    # decompressed_bytes = zobj.decompress(datum_tmp.wav_file)
+                    # # decompressed_bytes = zlib.decompress(file)
+                    # waveform = np.frombuffer(decompressed_bytes, dtype=np.float32)
 
-                    # decompressed_bytes = zlib.decompress(file)
-                    waveform = np.frombuffer(decompressed_bytes, dtype=np.float32)
+                    waveform = np.array(datum_tmp.wav_file, dtype=np.float32)
                 except:
                     tyu += 1
                     pass
@@ -198,25 +199,25 @@ class AudioDataset(Dataset):
         index = last_index
         flag = 0
         val = 623787092.84794
-        while (flag == 0):
-            id_, k = self.keys[index]
-            with self.mos_txn_env.begin(write=False) as txn:
-                cursor = txn.cursor()
-                try:
-                    if cursor.set_key(k):
-                        datum_mos = Datum_lmdb_mos()
-                        datum_mos.ParseFromString(cursor.value())
-                        mos = datum_mos.mos       
-                    else:
-                        mos = -1.0
-                except :
-                    mos = -1.0
-            if 'pixa_' in k.decode() or 'ifly_' in k.decode():
-                mos = 5.0
-            if np.random.rand() < math.exp(5.0 * mos) / val:
-                flag = 1
-            last_index = index
-            index = random.randint(0, len(self.keys) - 1)
+        # while (flag == 0):
+        #     id_, k = self.keys[index]
+        #     with self.mos_txn_env.begin(write=False) as txn:
+        #         cursor = txn.cursor()
+        #         try:
+        #             if cursor.set_key(k):
+        #                 datum_mos = Datum_lmdb_mos()
+        #                 datum_mos.ParseFromString(cursor.value())
+        #                 mos = datum_mos.mos
+        #             else:
+        #                 mos = -1.0
+        #         except :
+        #             mos = -1.0
+        #     if 'pixa_' in k.decode() or 'ifly_' in k.decode():
+        #         mos = 5.0
+        #     if np.random.rand() < math.exp(5.0 * mos) / val:
+        #         flag = 1
+        #     last_index = index
+        #     index = random.randint(0, len(self.keys) - 1)
         index = last_index
         caption_original = datum_tmp.caption_original
         try:
@@ -239,39 +240,40 @@ class AudioDataset(Dataset):
             caption = caption_generated if caption_generated != "none" else caption_original
         else:
             caption = caption_original
-        prefix = 'medium quality'
-        if ("pixa_" in k.decode() or "ifly_" in k.decode()):
-            if caption == 'none':
-                prefix = 'high quality'
-                caption = ''
-            else:
-                prefix = 'high quality'
-            mos = 5.00
-        else:
-            mos = float(mos)
-            if mos > 3.55 and mos < 4.05:
-                prefix = "medium quality"
-            elif mos >= 4.05:
-                prefix = "high quality"
-            elif mos <= 3.55:
-                prefix = "low quality"
-            else:
-                print(f'mos score for key : {k.decode()} miss, please check')
+        prefix = 'high quality'
+        # if ("pixa_" in k.decode() or "ifly_" in k.decode()):
+        #     if caption == 'none':
+        #         prefix = 'high quality'
+        #         caption = ''
+        #     else:
+        #         prefix = 'high quality'
+        #     mos = 5.00
+        # else:
+        #     mos = float(mos)
+        #     if mos > 3.55 and mos < 4.05:
+        #         prefix = "medium quality"
+        #     elif mos >= 4.05:
+        #         prefix = "high quality"
+        #     elif mos <= 3.55:
+        #         prefix = "low quality"
+        #     else:
+        #         print(f'mos score for key : {k.decode()} miss, please check')
         #if 'low quality' or 'quality is low' in caption:
         #    prefix = 'low quality'
         caption = prefix + ', ' + caption
-        miu = 3.80
-        sigma = 0.20
-        if miu - 2 * sigma <= mos < miu - sigma:
-            vq_mos = 2
-        elif miu - sigma <= mos < miu + sigma:
-            vq_mos = 3
-        elif miu + sigma <= mos < miu + 2 * sigma:
-            vq_mos = 4
-        elif mos >= miu + 2 * sigma:
-            vq_mos = 5
-        else:
-            vq_mos = 1
+        # miu = 3.80
+        # sigma = 0.20
+        # if miu - 2 * sigma <= mos < miu - sigma:
+        #     vq_mos = 2
+        # elif miu - sigma <= mos < miu + sigma:
+        #     vq_mos = 3
+        # elif miu + sigma <= mos < miu + 2 * sigma:
+        #     vq_mos = 4
+        # elif mos >= miu + 2 * sigma:
+        #     vq_mos = 5
+        # else:
+        #     vq_mos = 1
+        vq_mos = 2
         """
         tags = datum_tmp.tags.decode()
         caption_writing = datum_tmp.caption_writing.decode()

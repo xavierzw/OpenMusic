@@ -70,25 +70,23 @@ def main(configs, config_yaml_path, exp_group_name, exp_name, perform_validation
     train_key_path = [_ + '/data_key.key' for _ in train_lmdb_path]
 
     val_lmdb_path = configs["val_path"]["val_lmdb_path"]
-    val_key_path = configs["val_path"]["val_key_path"]
+    val_key_path = [_ + '/data_key.key' for _ in val_lmdb_path]
+    # val_key_path = configs["val_path"]["val_key_path"]
     
 
     #try:
     mos_path = configs["mos_path"]
     from audioldm_train.utilities.data.hhhh import AudioDataset
     dataset = AudioDataset(config=configs, lmdb_path=train_lmdb_path, key_path=train_key_path, mos_path=mos_path)
-    
 
     loader = DataLoader(
         dataset,
         batch_size=batch_size,
-        num_workers=8,
+        num_workers=0,
         pin_memory=True,
         shuffle=True,
     )
     
-   
-
     print(
         "The length of the dataset is %s, the length of the dataloader is %s, the batchsize is %s"
         % (len(dataset), len(loader), batch_size)
@@ -100,7 +98,7 @@ def main(configs, config_yaml_path, exp_group_name, exp_name, perform_validation
 
     val_loader = DataLoader(
         val_dataset,
-        batch_size=8,
+        batch_size=2,
     )
 
     # Copy test data
@@ -186,12 +184,18 @@ def main(configs, config_yaml_path, exp_group_name, exp_name, perform_validation
         devices="auto",
         logger=wandb_logger,
         max_steps=max_steps,
-        num_sanity_val_steps=1,
+        num_sanity_val_steps=0, # 1,
         limit_val_batches=limit_val_batches,
-        check_val_every_n_epoch=validation_every_n_epochs,
+        check_val_every_n_epoch=0, # validation_every_n_epochs,
         strategy=DDPStrategy(find_unused_parameters=True),
-        gradient_clip_val=2.0,callbacks=[checkpoint_callback],num_nodes=1,
+        gradient_clip_val=2.0,
+        callbacks=[checkpoint_callback],
+        num_nodes=1,
+        log_every_n_steps=1
     )
+
+    print("Train dataset size:", len(loader))
+    print("Val dataset size:", len(val_loader))
 
     trainer.fit(latent_diffusion, loader, val_loader, ckpt_path=resume_from_checkpoint)
 

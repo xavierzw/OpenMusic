@@ -20,10 +20,10 @@ pretrained:
 mos_path: "" 
 
 train_path:
-  train_lmdb_path: [] # path list of training lmdb folders
+  train_lmdb_path: ["./dataset/toy_lmdb"] # path list of training lmdb folders
 
 val_path:
-  val_lmdb_path: [] # path list of training lmdb folders
+  val_lmdb_path: ["./dataset/toy_lmdb"] # path list of training lmdb folders
   val_key_path: [] #  path list of training lmdb key files
 
 variables:
@@ -78,7 +78,7 @@ model:
       target: audioldm_train.modules.latent_encoder.autoencoder.AutoencoderKL
       params: 
         # TODO: change it with your VAE checkpoint
-        reload_from_ckpt: ""
+        reload_from_ckpt: "checkpoints/hifi-gan/vae_mel_16k_64bins.ckpt"
         sampling_rate: *sampling_rate
         batchsize: 1
         monitor: val/rec_loss
@@ -115,7 +115,7 @@ model:
     warmup_steps: *warmup_steps
     optimize_ddpm_parameter: *optimize_ddpm_parameter
     sampling_rate: *sampling_rate
-    batchsize: 16
+    batchsize: 3
     linear_start: 0.0015
     linear_end: 0.0195
     num_timesteps_cond: 1
@@ -133,7 +133,7 @@ model:
     unet_config:
       # TODO: choose your class, Default: MDT_MOS_AS_TOKEN 
       # (Noted: the 2D-Rope, SwiGLU and the MDT are in two classes, when training with all of them, they should be changed and merged)
-      target: audioldm_train.modules.diffusionmodules.PixArt.Your_Class 
+      target: audioldm_train.modules.diffusionmodules.PixArt.PixArt_MDT
       params:
         input_size : [256, 16]
       # patch_size: [16,4]
@@ -150,7 +150,7 @@ model:
         window_size : 0
         window_block_indexes : None
         use_rel_pos : False
-        cond_dim : 1024
+        cond_dim : 512 # 1024
         lewei_scale : 1.0
         overlap: [0, 0]
         use_cfg: true

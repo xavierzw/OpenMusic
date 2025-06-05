@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ignore .* files
+.*
+!/.gitignore
+!/.gitattributes
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+checkpoints/
+dataset/
+log/
+taming-transformers/
+taming/
+wandb/

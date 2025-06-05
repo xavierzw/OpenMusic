@@ -47,6 +47,9 @@ from audioldm_train.modules.latent_diffusion.plms import PLMSSampler
 import soundfile as sf
 import os
 
+
+ENABLE_CLAP = False
+
 __conditioning_keys__ = {"concat": "c_concat", "crossattn": "c_crossattn", "adm": "y"}
 
 import json
@@ -116,12 +119,13 @@ class DDPM(pl.LightningModule):
         self.log_every_t = log_every_t
         self.first_stage_key = first_stage_key
         self.sampling_rate = sampling_rate
-        self.clap = CLAPAudioEmbeddingClassifierFreev2(
-            pretrained_path=config_data["clap_music"],
-            sampling_rate=self.sampling_rate,
-            embed_mode="audio",
-            amodel="HTSAT-base",
-        )
+        if ENABLE_CLAP:
+            self.clap = CLAPAudioEmbeddingClassifierFreev2(
+                pretrained_path=config_data["clap_music"],
+                sampling_rate=self.sampling_rate,
+                embed_mode="audio",
+                amodel="HTSAT-base",
+            )
 
         if self.global_rank == 0:
             self.evaluator = evaluator
@@ -757,6 +761,7 @@ class DDPM(pl.LightningModule):
 
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
+        print(f"[validation_step] Start batch_idx={batch_idx}")
         self.generate_sample(
             [batch],
             name=self.validation_folder_name,
@@ -766,6 +771,7 @@ class DDPM(pl.LightningModule):
             ddim_steps=self.evaluation_params["ddim_sampling_steps"],
             n_gen=self.evaluation_params["n_candidates_per_samples"],
         )
+        print(f"[validation_step] End batch_idx={batch_idx}")
 
     def get_validation_folder_name(self):
         now = datetime.datetime.now()
@@ -1210,7 +1216,7 @@ class LatentDiffusion(DDPM):
             if isinstance(c, torch.Tensor):
                 batchsize = c.size(0)
             elif isinstance(c, list):
-                batchsize = len(c)
+                batchsize = len(c[0])
             else:
                 raise NotImplementedError()
 
@@ -2038,22 +2044,25 @@ class LatentDiffusion(DDPM):
                 )
 
                 if n_gen > 1:
-                    try:
-                        best_index = []
-                        similarity = self.clap.cos_similarity(
-                            torch.FloatTensor(waveform).squeeze(1), text
-                        )
-                        for i in range(z.shape[0]):
-                            candidates = similarity[i :: z.shape[0]]
-                            max_index = torch.argmax(candidates).item()
-                            best_index.append(i + max_index * z.shape[0])
+                    if ENABLE_CLAP:
+                        try:
+                            best_index = []
+                            similarity = self.clap.cos_similarity(
+                                torch.FloatTensor(waveform).squeeze(1), text
+                            )
+                            for i in range(z.shape[0]):
+                                candidates = similarity[i :: z.shape[0]]
+                                max_index = torch.argmax(candidates).item()
+                                best_index.append(i + max_index * z.shape[0])
 
-                        waveform = waveform[best_index]
+                            waveform = waveform[best_index]
 
-                        print("Similarity between generated audio and text", similarity)
-                        print("Choose the following indexes:", best_index)
-                    except Exception as e:
-                        print("Warning: while calculating CLAP score (not fatal), ", e)
+                            print("Similarity between generated audio and text", similarity)
+                            print("Choose the following indexes:", best_index)
+                        except Exception as e:
+                            print("Warning: while calculating CLAP score (not fatal), ", e)
+                    else:
+                        waveform = waveform[0]
                 self.save_waveform(waveform, waveform_save_path, name=fnames, n_gen=n_gen)
         return waveform_save_path
 
