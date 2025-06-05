@@ -1216,7 +1216,7 @@ class LatentDiffusion(DDPM):
             if isinstance(c, torch.Tensor):
                 batchsize = c.size(0)
             elif isinstance(c, list):
-                batchsize = len(c[0])
+                batchsize = len(c)
             else:
                 raise NotImplementedError()
 

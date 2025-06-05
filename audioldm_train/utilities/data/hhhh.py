@@ -128,7 +128,8 @@ class AudioDataset(Dataset):
         ) = self.feature_extraction(index)
 
         data = {
-            "text": [caption],  # list ... dict ?
+            # "text": [caption],  # list ... dict ?
+            "text": caption,  # list ... dict ?
             "fname": [fname], # list
             # tensor, [batchsize, 1, samples_num]
             "waveform": "" if (waveform is None) else waveform.float(),

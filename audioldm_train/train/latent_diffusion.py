@@ -186,7 +186,7 @@ def main(configs, config_yaml_path, exp_group_name, exp_name, perform_validation
         max_steps=max_steps,
         num_sanity_val_steps=0, # 1,
         limit_val_batches=limit_val_batches,
-        check_val_every_n_epoch=0, # validation_every_n_epochs,
+        check_val_every_n_epoch=2, # validation_every_n_epochs,
         strategy=DDPStrategy(find_unused_parameters=True),
         gradient_clip_val=2.0,
         callbacks=[checkpoint_callback],

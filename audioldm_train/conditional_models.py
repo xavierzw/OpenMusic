@@ -293,7 +293,6 @@ class FlanT5HiddenState(nn.Module):
             logging.exception("An error occurred: %s", str(e))
 
     def encode_text(self, prompt):
-        prompt = prompt[0]
         device = self.model.device
         batch = self.tokenizer(
             prompt,
