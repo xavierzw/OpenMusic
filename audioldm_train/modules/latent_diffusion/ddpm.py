@@ -48,7 +48,7 @@ import soundfile as sf
 import os
 
 
-ENABLE_CLAP = False
+ENABLE_CLAP = True
 
 __conditioning_keys__ = {"concat": "c_concat", "crossattn": "c_crossattn", "adm": "y"}
 
@@ -776,13 +776,17 @@ class DDPM(pl.LightningModule):
     def get_validation_folder_name(self):
         now = datetime.datetime.now()
         timestamp = now.strftime("%m-%d-%H:%M")
-        return "val_%s_%s_cfg_scale_%s_ddim_%s_n_cand_%s" % (
+        return "val_%s_%s" % (
             self.global_step,
             timestamp,
-            self.evaluation_params["unconditional_guidance_scale"],
-            self.evaluation_params["ddim_sampling_steps"],
-            self.evaluation_params["n_candidates_per_samples"],
         )
+        # return "val_%s_%s_cfg_scale_%s_ddim_%s_n_cand_%s" % (
+        #     self.global_step,
+        #     timestamp,
+        #     self.evaluation_params["unconditional_guidance_scale"],
+        #     self.evaluation_params["ddim_sampling_steps"],
+        #     self.evaluation_params["n_candidates_per_samples"],
+        # )
 
     def on_validation_epoch_end(self) -> None:
         if self.global_rank == 0 and self.evaluator is not None:
@@ -1829,6 +1833,7 @@ class LatentDiffusion(DDPM):
         if type(name) != str and len(name[0][1]) > 1:
             name = list(name[0][1])
             name = [_.decode() if type(_) is bytes else _ for _ in name]
+        print(">>> name=", name, ", n_gen=", n_gen, ", after n_gen=", int(waveform.shape[0] / len(name)), ", waveform.shape=", waveform.shape)
         n_gen = int(waveform.shape[0] / len(name))
         assert len(name) * n_gen == waveform.shape[0]
         lenn = len(name)
@@ -1840,16 +1845,17 @@ class LatentDiffusion(DDPM):
             if type(name) is str:
                 path = os.path.join(savepath, "%s_%s_%s.wav" % (self.global_step, i, name))
             elif type(name) is list:
-                path = os.path.join(
-                    savepath,
-                    "%s.wav"
-                    % (
-                        os.path.basename(name[i])
+                # path = os.path.join(
+                #     savepath,
+                #     "%s.wav"
+                #     % (
+                #         os.path.basename(name[i])
 
-                        if (not ".wav" in name[i])
-                        else os.path.basename(name[i]).split(".")[0]
-                    ),
-                )
+                #         if (not ".wav" in name[i])
+                #         else os.path.basename(name[i]).split(".")[0]
+                #     ),
+                # )
+                path = os.path.join(savepath, "music_{}.wav".format(i))
             else:
                 # import pdb 
                 # pdb.set_trace()
@@ -1859,6 +1865,7 @@ class LatentDiffusion(DDPM):
                 todo_waveform / np.max(np.abs(todo_waveform))
             ) * 0.8  # Normalize the energy of the generation output
             try:
+                print(">>> write to path: ", path)
                 sf.write(path, todo_waveform, samplerate=self.sampling_rate)
             except:
                 print('waveform name ERROR!!!!!!!!!!!!')
@@ -2062,7 +2069,8 @@ class LatentDiffusion(DDPM):
                         except Exception as e:
                             print("Warning: while calculating CLAP score (not fatal), ", e)
                     else:
-                        waveform = waveform[0]
+                        waveform = waveform[[0,1]]
+                print(">>> waveform_save_path=", waveform_save_path)
                 self.save_waveform(waveform, waveform_save_path, name=fnames, n_gen=n_gen)
         return waveform_save_path
 

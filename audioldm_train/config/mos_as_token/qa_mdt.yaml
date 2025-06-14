@@ -1,6 +1,8 @@
-log_directory: "./log/latent_diffusion"
+log_directory: "/log/latent_diffusion"
 project: "audioldm"
 precision: "high"
+# reload_from_ckpt: "/log/latent_diffusion/mos_as_token/checkpoints/checkpoint-394999.ckpt"
+reload_from_ckpt: "/checkpoint-799.ckpt"
 
 # TODO: change this with your project path
 base_root: 
@@ -8,10 +10,10 @@ base_root:
 # TODO: change this with your pretrained path
 # TODO: pretrained path is also needed in "base_root/offset_pretrained_checkpoints.json"
 pretrained:
- clap_music: ""
- flan_t5: ""
- hifi-gan: ""
- roberta-base: ""
+ "clap_music": "checkpoints/clap_music_speech_audioset_epoch_15_esc_89.98.pt"
+ "flan_t5": "google/flan-t5-large"
+ "hifi-gan": "checkpoints/hifi-gan"
+ "roberta-base": "roberta-base"
 
 # TODO: lmdb dataset that stores pMOS of the training dataset
 # while in inference, we don't need it !!!
@@ -20,10 +22,10 @@ pretrained:
 mos_path: "" 
 
 train_path:
-  train_lmdb_path: ["./dataset/toy_lmdb"] # path list of training lmdb folders
+  train_lmdb_path: ["./dataset/jay_lmdb"] # path list of training lmdb folders
 
 val_path:
-  val_lmdb_path: ["./dataset/toy_lmdb"] # path list of training lmdb folders
+  val_lmdb_path: ["./dataset/jay_val_lmdb"] # path list of training lmdb folders
   val_key_path: [] #  path list of training lmdb key files
 
 variables:
@@ -47,7 +49,7 @@ data:
 
 step:
   validation_every_n_epochs: 10000
-  save_checkpoint_every_n_steps: 1000
+  save_checkpoint_every_n_steps: 100 # 1000
   # limit_val_batches: 2
   max_steps: 8000000
   save_top_k: 1000
@@ -115,7 +117,7 @@ model:
     warmup_steps: *warmup_steps
     optimize_ddpm_parameter: *optimize_ddpm_parameter
     sampling_rate: *sampling_rate
-    batchsize: 3
+    batchsize: 5
     linear_start: 0.0015
     linear_end: 0.0195
     num_timesteps_cond: 1
@@ -133,7 +135,7 @@ model:
     unet_config:
       # TODO: choose your class, Default: MDT_MOS_AS_TOKEN 
       # (Noted: the 2D-Rope, SwiGLU and the MDT are in two classes, when training with all of them, they should be changed and merged)
-      target: audioldm_train.modules.diffusionmodules.PixArt.PixArt_MDT
+      target: audioldm_train.modules.diffusionmodules.PixArt.PixArt_MDT_MOS_AS_TOKEN
       params:
         input_size : [256, 16]
       # patch_size: [16,4]
@@ -150,7 +152,7 @@ model:
         window_size : 0
         window_block_indexes : None
         use_rel_pos : False
-        cond_dim : 512 # 1024
+        cond_dim : 1024 #512
         lewei_scale : 1.0
         overlap: [0, 0]
         use_cfg: true
@@ -166,4 +168,4 @@ model:
     evaluation_params:
       unconditional_guidance_scale: 3.5
       ddim_sampling_steps: 200
-      n_candidates_per_samples: 3
+      n_candidates_per_samples: 1  #3

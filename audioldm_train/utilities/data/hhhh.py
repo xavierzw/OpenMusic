@@ -183,6 +183,7 @@ class AudioDataset(Dataset):
                     cursor.set_key(k)
                     datum_tmp = Datum_lmdb()
                     datum_tmp.ParseFromString(cursor.value())
+
                     # zobj = zlib.decompressobj()  # obj for decompressing data streams that won’t fit into memory at once.
                     # decompressed_bytes = zobj.decompress(datum_tmp.wav_file)
                     # # decompressed_bytes = zlib.decompress(file)
@@ -190,6 +191,8 @@ class AudioDataset(Dataset):
 
                     waveform = np.array(datum_tmp.wav_file, dtype=np.float32)
                 except:
+                    print(">>> decompress failed!")
+                    sys.exit(-1)
                     tyu += 1
                     pass
             tyu += 1

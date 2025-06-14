@@ -420,11 +420,11 @@ class AudioDataset(Dataset):
         if os.path.exists(filename):
             waveform, random_start = self.read_wav_file(filename)
         else:
-            print(
-                'Non-fatal Warning [dataset.py]: The wav path "',
-                filename,
-                '" is not find in the metadata. Use empty waveform instead. This is normal in the inference process.',
-            )
+            # print(
+            #     'Non-fatal Warning [dataset.py]: The wav path "',
+            #     filename,
+            #     '" is not find in the metadata. Use empty waveform instead. This is normal in the inference process.',
+            # )
             target_length = int(self.sampling_rate * self.duration)
             waveform = torch.zeros((1, target_length))
             random_start = 0

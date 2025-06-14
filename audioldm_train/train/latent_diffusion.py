@@ -141,7 +141,7 @@ def main(configs, config_yaml_path, exp_group_name, exp_name, perform_validation
         dirpath=checkpoint_path,
         monitor="global_step",
         mode="max",
-        filename="checkpoint-fad-{val/frechet_inception_distance:.2f}-global_step={global_step:.0f}",
+        filename="checkpoint-{global_step:.0f}",
         every_n_train_steps=save_checkpoint_every_n_steps,
         save_top_k=save_top_k,
         auto_insert_metric_name=False,
@@ -151,16 +151,19 @@ def main(configs, config_yaml_path, exp_group_name, exp_name, perform_validation
     os.makedirs(checkpoint_path, exist_ok=True)
     # shutil.copy(config_yaml_path, wandb_path)
 
+    print(">>> checkpoint_path=", checkpoint_path)
+    print(">>> config_reload_from_ckpt=", config_reload_from_ckpt)
+
     if len(os.listdir(checkpoint_path)) > 0:
-        print("Load checkpoint from path: %s" % checkpoint_path)
+        print(">>> Load checkpoint from path: %s" % checkpoint_path)
         restore_step, n_step = get_restore_step(checkpoint_path)
         resume_from_checkpoint = os.path.join(checkpoint_path, restore_step)
-        print("Resume from checkpoint", resume_from_checkpoint)
+        print(">>> Resume from checkpoint", resume_from_checkpoint)
     elif config_reload_from_ckpt is not None:
         resume_from_checkpoint = config_reload_from_ckpt
-        print("Reload ckpt specified in the config file %s" % resume_from_checkpoint)
+        print(">>> Reload ckpt specified in the config file %s" % resume_from_checkpoint)
     else:
-        print("Train from scratch")
+        print(">>> Train from scratch")
         resume_from_checkpoint = None
 
     devices = torch.cuda.device_count()
@@ -186,7 +189,7 @@ def main(configs, config_yaml_path, exp_group_name, exp_name, perform_validation
         max_steps=max_steps,
         num_sanity_val_steps=0, # 1,
         limit_val_batches=limit_val_batches,
-        check_val_every_n_epoch=2, # validation_every_n_epochs,
+        check_val_every_n_epoch=validation_every_n_epochs,
         strategy=DDPStrategy(find_unused_parameters=True),
         gradient_clip_val=2.0,
         callbacks=[checkpoint_callback],

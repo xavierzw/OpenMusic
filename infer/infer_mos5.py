@@ -14,7 +14,6 @@ from audioldm_train.utilities.model_util import instantiate_from_config
 from audioldm_train.utilities.tools import build_dataset_json_from_list
 
 def infer(dataset_key, configs, config_yaml_path, exp_group_name, exp_name):
-    
     seed_everything(0)
 
     if "precision" in configs.keys():
@@ -71,6 +70,7 @@ def infer(dataset_key, configs, config_yaml_path, exp_group_name, exp_name):
         "n_candidates_per_samples"
     ]
     # resume_from_checkpoint = ""
+    print(">>> resume_from_checkpoint=", resume_from_checkpoint)
     checkpoint = torch.load(resume_from_checkpoint)
     latent_diffusion.load_state_dict(checkpoint["state_dict"],strict=False)
 

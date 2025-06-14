@@ -422,7 +422,7 @@ class AudioDataset(Dataset):
             waveform, random_start = self.read_wav_file(filename)
         else:
             print(
-                'Non-fatal Warning [dataset.py]: The wav path "',
+                'Non-fatal Warning [dataset_original_mos2.py]: The wav path "',
                 filename,
                 '" is not find in the metadata. Use empty waveform instead. This is normal in the inference process.',
             )
