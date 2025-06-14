@@ -1,0 +1,8 @@
+syntax = "proto2";
+
+message Datum_all {
+  repeated float wav_file = 1;
+  required string caption_original = 2;
+  repeated string caption_generated = 3;
+  required float mos = 4;
+}
