@@ -16,7 +16,9 @@ __pycache__/
 *.pyd
 
 checkpoints/
-dataset/
+dataset/*
+!dataset/*.py
+!dataset/*.proto
 !dataset/**/*.py
 !dataset/**/*.proto
 log/
